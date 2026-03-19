@@ -521,3 +521,11 @@ class API(object):
         except Exception as e:
             LOG.warning("Error fetching media segments: %s", e)
             return None
+
+    def get_channels(self, params=None):
+        """GET /LiveTv/Channels"""
+        return self._get("LiveTv/Channels", params or {})
+
+    def get_programs(self, params=None):
+        """GET /LiveTv/Programs"""
+        return self._get("LiveTv/Programs", params or {})

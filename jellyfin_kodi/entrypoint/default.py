@@ -14,6 +14,9 @@ import xbmcgui
 import xbmcplugin
 import xbmcaddon
 
+from ..livetv.iptvmanager import IPTVManager
+from ..livetv.livetv import LiveTV
+
 from .. import client
 from ..database import reset, get_sync, Database, jellyfin_db, get_credentials
 from ..objects import Objects, Actions
@@ -111,6 +114,15 @@ class Events(object):
                 params.get("transcode") == "true",
                 playlist=params.get("playlist") == "true",
             )
+
+        elif mode == "iptv_channels":
+            port = int(params.get("port", 0))
+            IPTVManager(port, LiveTV(jellyfin_client)).send_channels()
+
+        elif mode == "iptv_epg":
+            port = int(params.get("port", 0))
+            days = int(xbmcaddon.Addon().getSetting("iptv.epg_days") or 3)
+            IPTVManager(port, LiveTV(jellyfin_client)).send_epg_days(days)
 
         elif mode == "playlist":
             api_client.post_session(
