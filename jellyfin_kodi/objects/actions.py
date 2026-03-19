@@ -639,6 +639,12 @@ class Actions(object):
         listitem.setProperty("IsPlayable", "true")
         listitem.setProperty("IsFolder", "false")
 
+        listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
+        listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
+        listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
+        listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+        listitem.setMimeType("application/vnd.apple.mpegurl")
+
         listitem.setLabel(obj["Title"])
         listitem.setInfo("video", metadata)
         listitem.setContentLookup(False)

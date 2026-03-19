@@ -668,6 +668,92 @@
 				</setting>
 			</group>
 		</category>
+		<category id="livetv" label="33262">
+				<group id="1" label="33262">
+
+						<setting id="iptv.install" type="action" label="33263" help="">
+								<level>0</level>
+								<data>InstallAddon(service.iptv.manager)</data>
+								<constraints>
+										<allowempty>true</allowempty>
+								</constraints>
+								<visible>!System.HasAddon(service.iptv.manager)</visible>
+								<control type="button" format="action">
+										<close>false</close>
+								</control>
+						</setting>
+
+						<setting id="iptv.enabled" type="boolean" label="33264" help="">
+								<level>0</level>
+								<default>false</default>
+								<visible>System.HasAddon(service.iptv.manager)</visible>
+								<control type="toggle"/>
+						</setting>
+
+						<setting id="iptv.opensettings" type="action" label="33265" help="">
+								<level>0</level>
+								<data>Addon.OpenSettings(service.iptv.manager)</data>
+								<constraints>
+										<allowempty>true</allowempty>
+								</constraints>
+								<visible>System.HasAddon(service.iptv.manager)</visible>
+								<dependencies>
+										<dependency type="enable">
+												<condition operator="is" setting="iptv.enabled">true</condition>
+										</dependency>
+								</dependencies>
+								<control type="button" format="action">
+										<close>false</close>
+								</control>
+						</setting>
+
+						<setting id="iptv.epg_days" type="integer" label="33266" help="">
+								<level>0</level>
+								<default>3</default>
+								<constraints>
+										<minimum>1</minimum>
+										<step>1</step>
+										<maximum>7</maximum>
+								</constraints>
+								<visible>System.HasAddon(service.iptv.manager)</visible>
+								<dependencies>
+										<dependency type="enable">
+												<condition operator="is" setting="iptv.enabled">true</condition>
+										</dependency>
+								</dependencies>
+								<control type="slider" format="integer">
+										<popup>false</popup>
+								</control>
+						</setting>
+
+				</group>
+
+				<group id="2">
+						<visible>false</visible>
+
+						<setting id="iptv.channels_uri" type="string" label="" help="">
+								<level>0</level>
+								<default>plugin://plugin.video.jellyfin/?mode=iptv_channels</default>
+								<constraints>
+										<allowempty>true</allowempty>
+								</constraints>
+								<control type="edit" format="string">
+										<heading/>
+								</control>
+						</setting>
+
+						<setting id="iptv.epg_uri" type="string" label="" help="">
+								<level>0</level>
+								<default>plugin://plugin.video.jellyfin/?mode=iptv_epg</default>
+								<constraints>
+										<allowempty>true</allowempty>
+								</constraints>
+								<control type="edit" format="string">
+										<heading/>
+								</control>
+						</setting>
+				</group>
+		</category>
 		<category id="advanced" label="30022" help="">
 			<group id="1">
 				<setting id="logLevel" type="integer" label="30004" help="">
@@ -791,6 +877,5 @@
 				</setting>
 			</group>
 		</category>
-
 	</section>
 </settings>
