@@ -3,6 +3,8 @@ import contextlib
 import logging
 from datetime import datetime, timezone, timedelta
 
+from jellyfin_kodi.helper.utils import settings
+
 LOG = logging.getLogger("plugin.video.jellyfin.livetv")
 _jf_log = logging.getLogger("JELLYFIN")
 
@@ -85,9 +87,10 @@ class LiveTV:
         return all_prg
 
     def get_stream_url(self, channel_id: str) -> str:
+        transcode = "&transcode=true" if settings("livetv.force_transcode.bool") else ""
         return (
             f"plugin://plugin.video.jellyfin/"
-            f"?id={channel_id}&mode=play&server={self.server_id}&transcode=true"
+            f"?id={channel_id}&mode=play&server={self.server_id}{transcode}"
         )
 
     def get_channel_logo_url(self, channel: dict) -> str | None:

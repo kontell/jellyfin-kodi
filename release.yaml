@@ -49,3 +49,6 @@ dependencies:
       version: '0.0.5+matrix.1'
     - addon: 'script.module.websocket'
       version: '1.6.4'
+    - addon: 'inputstream.ffmpegdirect'
+      version: '1.0.0'
+      optional: 'true'

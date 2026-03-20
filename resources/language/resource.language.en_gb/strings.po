@@ -1238,8 +1238,8 @@ msgid "Off"
 msgstr "Off"
 
 msgctxt "#33262"
-msgid "Live TV / IPTV Manager"
-msgstr "Live TV / IPTV Manager"
+msgid "Live TV"
+msgstr "Live TV"
 
 msgctxt "#33263"
 msgid "Install IPTV Manager"
@@ -1249,10 +1249,15 @@ msgctxt "#33264"
 msgid "Enable IPTV Manager integration"
 msgstr "Enable IPTV Manager integration"
 
-msgctxt "#33265"
-msgid "IPTV Manager settings..."
-msgstr "IPTV Manager settings..."
 
 msgctxt "#33266"
 msgid "EPG days to fetch"
 msgstr "EPG days to fetch"
+
+msgctxt "#33267"
+msgid "Force transcode live streams"
+msgstr "Force transcode live streams"
+
+msgctxt "#33268"
+msgid "Force all live streams to transcode. This also enables timeshifting (pause, rewind) via inputstream.ffmpegdirect."
+msgstr "Force all live streams to transcode. This also enables timeshifting (pause, rewind) via inputstream.ffmpegdirect."

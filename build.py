@@ -69,7 +69,7 @@ def zip_files(py_version: str, source: str, target: str, dev: bool) -> None:
     """
     archive_name = "plugin.video.jellyfin+{}.zip".format(py_version)
 
-    with zipfile.ZipFile("{}/{}".format(target, archive_name), "w") as z:
+    with zipfile.ZipFile("{}/{}".format(target, archive_name), "w", compression=zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(args.source):
             for filename in filter(file_filter, files):
                 file_path = os.path.join(root, filename)

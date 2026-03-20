@@ -72,6 +72,8 @@ class Actions(object):
         LOG.info("[ play/%s ] %s", item["Id"], item["Name"])
 
         transcode = transcode or settings("playFromTranscode.bool")
+        if item.get("Type") == "TvChannel":
+            transcode = transcode or settings("livetv.force_transcode.bool")
         play = playutils.PlayUtils(
             item, transcode, self.server_id, self.server, self.api_client
         )
@@ -639,11 +641,12 @@ class Actions(object):
         listitem.setProperty("IsPlayable", "true")
         listitem.setProperty("IsFolder", "false")
 
-        listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
-        listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
-        listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
-        listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
-        listitem.setMimeType("application/vnd.apple.mpegurl")
+        if settings("livetv.force_transcode.bool"):
+            listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
+            listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
+            listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
+            listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+            listitem.setMimeType("application/vnd.apple.mpegurl")
 
         listitem.setLabel(obj["Title"])
         listitem.setInfo("video", metadata)

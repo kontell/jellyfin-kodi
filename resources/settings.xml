@@ -671,6 +671,12 @@
 		<category id="livetv" label="33262">
 				<group id="1" label="33262">
 
+						<setting id="livetv.force_transcode" type="boolean" label="33267" help="33268">
+								<level>0</level>
+								<default>true</default>
+								<control type="toggle"/>
+						</setting>
+
 						<setting id="iptv.install" type="action" label="33263" help="">
 								<level>0</level>
 								<data>InstallAddon(service.iptv.manager)</data>
@@ -679,7 +685,7 @@
 								</constraints>
 								<visible>!System.HasAddon(service.iptv.manager)</visible>
 								<control type="button" format="action">
-										<close>false</close>
+										<close>true</close>
 								</control>
 						</setting>
 
@@ -688,23 +694,6 @@
 								<default>false</default>
 								<visible>System.HasAddon(service.iptv.manager)</visible>
 								<control type="toggle"/>
-						</setting>
-
-						<setting id="iptv.opensettings" type="action" label="33265" help="">
-								<level>0</level>
-								<data>Addon.OpenSettings(service.iptv.manager)</data>
-								<constraints>
-										<allowempty>true</allowempty>
-								</constraints>
-								<visible>System.HasAddon(service.iptv.manager)</visible>
-								<dependencies>
-										<dependency type="enable">
-												<condition operator="is" setting="iptv.enabled">true</condition>
-										</dependency>
-								</dependencies>
-								<control type="button" format="action">
-										<close>false</close>
-								</control>
 						</setting>
 
 						<setting id="iptv.epg_days" type="integer" label="33266" help="">
