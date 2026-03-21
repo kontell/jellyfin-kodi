@@ -1261,3 +1261,31 @@ msgstr "Force transcode live streams"
 msgctxt "#33268"
 msgid "Force all live streams to transcode. This also enables timeshifting (pause, rewind) via inputstream.ffmpegdirect."
 msgstr "Force all live streams to transcode. This also enables timeshifting (pause, rewind) via inputstream.ffmpegdirect."
+
+msgctxt "#33270"
+msgid "Jellyfin: Record..."
+msgstr "Jellyfin: Record..."
+
+msgctxt "#33271"
+msgid "Record Series"
+msgstr "Record Series"
+
+msgctxt "#33272"
+msgid "Record"
+msgstr "Record"
+
+msgctxt "#33273"
+msgid "Scheduled Timers"
+msgstr "Scheduled Timers"
+
+msgctxt "#33274"
+msgid "Cancel Timer"
+msgstr "Cancel Timer"
+
+msgctxt "#33275"
+msgid "Series Timer Rules"
+msgstr "Series Timer Rules"
+
+msgctxt "#33276"
+msgid "Cancel Series Timer"
+msgstr "Cancel Series Timer"
