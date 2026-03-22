@@ -639,10 +639,15 @@ class Actions(object):
         listitem.setProperty("IsPlayable", "true")
         listitem.setProperty("IsFolder", "false")
 
-        listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
-        listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
-        listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
-        listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+        inputstream = settings("livetv.inputstream") or "0"
+        if inputstream == "0":
+            listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
+            listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
+            listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
+            listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+        elif inputstream == "1":
+            listitem.setProperty("inputstream", "inputstream.adaptive")
+            listitem.setProperty("inputstream.adaptive.manifest_type", "hls")
         listitem.setMimeType("application/vnd.apple.mpegurl")
 
         listitem.setLabel(obj["Title"])

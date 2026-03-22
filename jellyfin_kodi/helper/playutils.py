@@ -4,6 +4,7 @@ from __future__ import division, absolute_import, print_function, unicode_litera
 #################################################################################################
 
 import os
+from urllib.parse import quote
 from uuid import uuid4
 
 import requests
@@ -183,15 +184,17 @@ class PlayUtils(object):
 
         if source.get("RequiresClosing"):
 
-            """Server returning live tv stream for direct play is hardcoded with 127.0.0.1."""
             self.info["LiveStreamId"] = source["LiveStreamId"]
-            source["SupportsDirectPlay"] = False
-            source["Protocol"] = "LiveTV"
 
-        if self.info["ForceTranscode"]:
-
+        if self.info["ForceTranscode"] or (
+            self.item.get("Type") == "TvChannel"
+            and settings("livetv.force_transcode.bool")
+        ):
             source["SupportsDirectPlay"] = False
             source["SupportsDirectStream"] = False
+
+            if source.get("RequiresClosing"):
+                source["Protocol"] = "LiveTV"
 
         if (
             source.get("Protocol") == "Http"
@@ -274,6 +277,11 @@ class PlayUtils(object):
             audio_bitrate = self.get_transcoding_audio_bitrate()
             video_bitrate = self.get_max_bitrate() - audio_bitrate
 
+            url_parsed = [
+                "=".join((k, quote(v, safe=""))) if "=" in p else p
+                for p in url_parsed
+                for k, _, v in [p.partition("=")]
+            ]
             params = "%s%s" % ("&".join(url_parsed), manual_tracks)
             params += "&VideoBitrate=%s&AudioBitrate=%s" % (
                 video_bitrate,
@@ -302,6 +310,15 @@ class PlayUtils(object):
         API = api.API(self.item, self.info["ServerAddress"])
         self.info["Method"] = "DirectPlay"
         self.info["Path"] = API.get_file_path(source.get("Path"))
+
+        # jellyfin-server returns 127.0.0.1 for live TV direct play paths;
+        # replace with the actual server address so remote clients can reach it
+        if "://127.0.0.1" in (self.info["Path"] or ""):
+            from urllib.parse import urlparse
+            server = urlparse(self.info["ServerAddress"])
+            self.info["Path"] = self.info["Path"].replace(
+                "://127.0.0.1", "://%s" % server.hostname
+            )
 
         return self.info["Path"]
 

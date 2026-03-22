@@ -87,7 +87,7 @@ class LiveTV:
     def get_stream_url(self, channel_id: str) -> str:
         return (
             f"plugin://plugin.video.jellyfin/"
-            f"?id={channel_id}&mode=play&server={self.server_id}&transcode=true"
+            f"?id={channel_id}&mode=play&server={self.server_id}"
         )
 
     def get_channel_logo_url(self, channel: dict) -> str | None:

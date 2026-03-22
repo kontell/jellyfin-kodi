@@ -69,7 +69,7 @@ def zip_files(py_version: str, source: str, target: str, dev: bool) -> None:
     """
     archive_name = "plugin.video.jellyfin+{}.zip".format(py_version)
 
-    with zipfile.ZipFile("{}/{}".format(target, archive_name), "w") as z:
+    with zipfile.ZipFile("{}/{}".format(target, archive_name), "w", zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(args.source):
             for filename in filter(file_filter, files):
                 file_path = os.path.join(root, filename)
@@ -91,6 +91,7 @@ def file_filter(file_name: str) -> bool:
         and not file_name.endswith(".pyo")
         and not file_name.endswith(".pyc")
         and not file_name.endswith(".pyd")
+        and file_name != "CLAUDE.md"
     )
 
 
@@ -106,6 +107,11 @@ def folder_filter(folder_name: str) -> bool:
         ".mypy_cache",
         ".pytest_cache",
         "__pycache__",
+        ".claude",
+        ".devcontainer",
+        ".vscode",
+        "tests",
+        "tmp",
     ]
     for f in filters:
         if f in folder_name.split(os.path.sep):

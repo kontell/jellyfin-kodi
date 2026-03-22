@@ -1241,6 +1241,22 @@ msgctxt "#33262"
 msgid "Live TV / IPTV Manager"
 msgstr "Live TV / IPTV Manager"
 
+msgctxt "#33271"
+msgid "Live TV"
+msgstr "Live TV"
+
+msgctxt "#33272"
+msgid "Force transcode live streams"
+msgstr "Force transcode live streams"
+
+msgctxt "#33273"
+msgid "Input stream"
+msgstr "Input stream"
+
+msgctxt "#33274"
+msgid "FFmpeg Direct"
+msgstr "FFmpeg Direct"
+
 msgctxt "#33263"
 msgid "Install IPTV Manager"
 msgstr "Install IPTV Manager"
@@ -1256,3 +1272,19 @@ msgstr "IPTV Manager settings..."
 msgctxt "#33266"
 msgid "EPG days to fetch"
 msgstr "EPG days to fetch"
+
+msgctxt "#33267"
+msgid "Stream player"
+msgstr "Stream player"
+
+msgctxt "#33268"
+msgid "FFmpeg Direct (timeshift)"
+msgstr "FFmpeg Direct (timeshift)"
+
+msgctxt "#33269"
+msgid "Adaptive"
+msgstr "Adaptive"
+
+msgctxt "#33270"
+msgid "None (Kodi default)"
+msgstr "None (Kodi default)"
