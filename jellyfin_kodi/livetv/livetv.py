@@ -70,6 +70,7 @@ class LiveTV:
                         "MinStartDate": now.isoformat(),
                         "MaxEndDate":   end.isoformat(),
                         "EnableImages": True,
+                        "Fields":       "Overview",
                         "SortBy":       "StartDate",
                         "Limit":        _PAGE_SIZE,
                         "StartIndex":   start_index,
