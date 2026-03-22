@@ -186,10 +186,7 @@ class PlayUtils(object):
 
             self.info["LiveStreamId"] = source["LiveStreamId"]
 
-        if self.info["ForceTranscode"] or (
-            self.item.get("Type") == "TvChannel"
-            and settings("livetv.force_transcode.bool")
-        ):
+        if self.info["ForceTranscode"]:
             source["SupportsDirectPlay"] = False
             source["SupportsDirectStream"] = False
 
