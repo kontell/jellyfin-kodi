@@ -3,7 +3,9 @@ import contextlib
 import logging
 from datetime import datetime, timezone, timedelta
 
-LOG = logging.getLogger("plugin.video.jellyfin.livetv")
+from jellyfin_kodi.helper import LazyLogger
+
+LOG = LazyLogger(__name__)
 _jf_log = logging.getLogger("JELLYFIN")
 
 _CHANNEL_CHUNK = 50
@@ -108,6 +110,108 @@ class LiveTV:
             f"{self._server_url}/Items/{programme['Id']}/Images/Primary"
             f"?tag={tag}&ApiKey={self.token}"
         )
+
+    # ------------------------------------------------------------------
+    # Channel / programme lookup (for context menu recording)
+    # ------------------------------------------------------------------
+
+    def find_channel_by_name(self, name: str) -> dict | None:
+        """Find a Jellyfin channel whose name matches *name* (case-insensitive)."""
+        target = name.lower()
+        for ch in self.get_channels():
+            if (ch.get("Name") or "").lower() == target:
+                return ch
+        return None
+
+    def find_programme(self, channel_id: str, start_time: str) -> dict | None:
+        """Find the programme on *channel_id* that overlaps *start_time*.
+
+        *start_time* should be an ISO-8601 timestamp (UTC or with offset).
+        We query a narrow 1-minute window around that time so Jellyfin returns
+        the programme that is on-air at that moment.
+        """
+        try:
+            dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            LOG.warning("find_programme: bad start_time %r", start_time)
+            return None
+
+        window_start = dt - timedelta(minutes=5)
+        window_end = dt + timedelta(minutes=5)
+        data = self._api.get_programs({
+            "ChannelIds": channel_id,
+            "MinStartDate": window_start.isoformat(),
+            "MaxStartDate": window_end.isoformat(),
+            "Limit": 5,
+            "SortBy": "StartDate",
+        })
+        items = (data or {}).get("Items", [])
+        if not items:
+            return None
+
+        # Return the programme whose start is closest to the requested time.
+        best = min(items, key=lambda p: abs(
+            datetime.fromisoformat(
+                p.get("StartDate", "").replace("Z", "+00:00")
+            ) - dt
+        ))
+        return best
+
+    # ------------------------------------------------------------------
+    # Timer / recording management
+    # ------------------------------------------------------------------
+
+    def create_timer(self, programme_id: str) -> bool:
+        """Schedule a one-time recording for *programme_id*."""
+        defaults = self._api.get_livetv_timer_defaults(programme_id)
+        if not defaults:
+            return False
+        self._api.create_livetv_timer(defaults)
+        return True
+
+    def create_series_timer(self, programme_id: str) -> bool:
+        """Schedule a series recording for *programme_id*."""
+        defaults = self._api.get_livetv_timer_defaults(programme_id)
+        if not defaults:
+            return False
+        # Promote to series timer: keep the programme info but post to series endpoint.
+        series_info = {
+            "Name": defaults.get("Name", ""),
+            "ChannelId": defaults.get("ChannelId"),
+            "ProgramId": programme_id,
+            "RecordAnyChannel": False,
+            "RecordAnyTime": True,
+            "RecordNewOnly": False,
+            "Days": [
+                "Sunday", "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday",
+            ],
+            "Priority": defaults.get("Priority", 0),
+            "PrePaddingSeconds": defaults.get("PrePaddingSeconds", 0),
+            "PostPaddingSeconds": defaults.get("PostPaddingSeconds", 0),
+        }
+        self._api.create_livetv_series_timer(series_info)
+        return True
+
+    def get_timers(self) -> list[dict]:
+        data = self._api.get_livetv_timers()
+        return (data or {}).get("Items", [])
+
+    def cancel_timer(self, timer_id: str) -> bool:
+        self._api.delete_livetv_timer(timer_id)
+        return True
+
+    def get_series_timers(self) -> list[dict]:
+        data = self._api.get_livetv_series_timers()
+        return (data or {}).get("Items", [])
+
+    def cancel_series_timer(self, timer_id: str) -> bool:
+        self._api.delete_livetv_series_timer(timer_id)
+        return True
+
+    # ------------------------------------------------------------------
+    # IPTV Manager integration
+    # ------------------------------------------------------------------
 
     def channels_for_iptv_manager(self) -> dict:
         streams = []

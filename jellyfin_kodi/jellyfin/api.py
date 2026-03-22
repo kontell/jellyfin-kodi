@@ -529,3 +529,39 @@ class API(object):
     def get_programs(self, params=None):
         """GET /LiveTv/Programs"""
         return self._get("LiveTv/Programs", params or {})
+
+    # ------------------------------------------------------------------
+    # Live TV timers & recordings
+    # ------------------------------------------------------------------
+
+    def get_livetv_timer_defaults(self, programme_id):
+        """GET /LiveTv/Timers/Defaults?ProgramId={id}"""
+        return self._get("LiveTv/Timers/Defaults", {"ProgramId": programme_id})
+
+    def create_livetv_timer(self, timer_info):
+        """POST /LiveTv/Timers"""
+        return self._post("LiveTv/Timers", json=timer_info)
+
+    def get_livetv_timers(self):
+        """GET /LiveTv/Timers"""
+        return self._get("LiveTv/Timers")
+
+    def delete_livetv_timer(self, timer_id):
+        """DELETE /LiveTv/Timers/{id}"""
+        return self._delete("LiveTv/Timers/%s" % timer_id)
+
+    def create_livetv_series_timer(self, series_timer_info):
+        """POST /LiveTv/SeriesTimers"""
+        return self._post("LiveTv/SeriesTimers", json=series_timer_info)
+
+    def get_livetv_series_timers(self):
+        """GET /LiveTv/SeriesTimers"""
+        return self._get("LiveTv/SeriesTimers")
+
+    def delete_livetv_series_timer(self, timer_id):
+        """DELETE /LiveTv/SeriesTimers/{id}"""
+        return self._delete("LiveTv/SeriesTimers/%s" % timer_id)
+
+    def get_livetv_recordings(self):
+        """GET /LiveTv/Recordings"""
+        return self._get("LiveTv/Recordings")

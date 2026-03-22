@@ -27,6 +27,10 @@
 					String.IsEqual(ListItem.DBTYPE,episode)]] +
 					!String.IsEmpty(Window(10000).Property(jellyfin_context_transcode))</visible>
 			</item>
+			<item library="context_record.py">
+				<label>33275</label>
+				<visible>Window.IsActive(tvguide) | Window.IsActive(radioguide)</visible>
+			</item>
 		</menu>
 	</extension>
 	<extension point="xbmc.addon.metadata">

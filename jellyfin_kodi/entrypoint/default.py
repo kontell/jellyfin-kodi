@@ -124,6 +124,22 @@ class Events(object):
             days = int(xbmcaddon.Addon().getSetting("iptv.epg_days") or 3)
             IPTVManager(port, LiveTV(jellyfin_client)).send_epg_days(days)
 
+        elif mode == "livetv_timers":
+            livetv_timers(jellyfin_client)
+
+        elif mode == "livetv_series_timers":
+            livetv_series_timers(jellyfin_client)
+
+        elif mode == "livetv_cancel_timer":
+            livetv = LiveTV(jellyfin_client)
+            livetv.cancel_timer(params["id"])
+            xbmc.executebuiltin("Container.Refresh")
+
+        elif mode == "livetv_cancel_series_timer":
+            livetv = LiveTV(jellyfin_client)
+            livetv.cancel_series_timer(params["id"])
+            xbmc.executebuiltin("Container.Refresh")
+
         elif mode == "playlist":
             api_client.post_session(
                 api_client.config.data["app.session"],
@@ -296,6 +312,8 @@ def listing():
                 context=context,
             )
 
+    directory(translate(33278), "plugin://plugin.video.jellyfin/?mode=livetv_timers", True)
+    directory(translate(33280), "plugin://plugin.video.jellyfin/?mode=livetv_series_timers", True)
     directory(translate(33194), "plugin://plugin.video.jellyfin/?mode=managelibs", True)
     directory(
         translate(33203), "plugin://plugin.video.jellyfin/?mode=managepaths", True
@@ -1361,3 +1379,70 @@ def browse_info():
         "DateCreated,EpisodeCount,SeasonCount,Path,Genres,Studios,Taglines,MediaStreams,Overview,Etag,"
         "ProductionLocations,Width,Height,RecursiveItemCount,ChildCount"
     )
+
+
+def livetv_timers(jellyfin_client):
+    """List scheduled one-time recording timers."""
+    livetv = LiveTV(jellyfin_client)
+    timers = livetv.get_timers()
+
+    list_li = []
+    for timer in timers:
+        label = "%s – %s" % (
+            timer.get("Name", "Unknown"),
+            timer.get("ChannelName", ""),
+        )
+        start = timer.get("StartDate", "")[:16].replace("T", " ")
+        if start:
+            label = "%s (%s)" % (label, start)
+
+        li = xbmcgui.ListItem(label)
+        li.setArt(
+            {"icon": "special://home/addons/plugin.video.jellyfin/resources/icon.png"}
+        )
+        li.addContextMenuItems([
+            (
+                translate(33279),  # "Cancel Timer"
+                "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_timer&id=%s)"
+                % timer["Id"],
+            )
+        ])
+
+        path = "plugin://plugin.video.jellyfin/?mode=livetv_timers"
+        list_li.append((path, li, False))
+
+    xbmcplugin.addDirectoryItems(PROCESS_HANDLE, list_li, len(list_li))
+    xbmcplugin.setContent(PROCESS_HANDLE, "files")
+    xbmcplugin.endOfDirectory(PROCESS_HANDLE)
+
+
+def livetv_series_timers(jellyfin_client):
+    """List series timer rules."""
+    livetv = LiveTV(jellyfin_client)
+    timers = livetv.get_series_timers()
+
+    list_li = []
+    for timer in timers:
+        label = "%s – %s" % (
+            timer.get("Name", "Unknown"),
+            timer.get("ChannelName", ""),
+        )
+
+        li = xbmcgui.ListItem(label)
+        li.setArt(
+            {"icon": "special://home/addons/plugin.video.jellyfin/resources/icon.png"}
+        )
+        li.addContextMenuItems([
+            (
+                translate(33281),  # "Cancel Series Timer"
+                "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_series_timer&id=%s)"
+                % timer["Id"],
+            )
+        ])
+
+        path = "plugin://plugin.video.jellyfin/?mode=livetv_series_timers"
+        list_li.append((path, li, False))
+
+    xbmcplugin.addDirectoryItems(PROCESS_HANDLE, list_li, len(list_li))
+    xbmcplugin.setContent(PROCESS_HANDLE, "files")
+    xbmcplugin.endOfDirectory(PROCESS_HANDLE)

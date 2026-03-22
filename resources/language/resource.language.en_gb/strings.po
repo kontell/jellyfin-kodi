@@ -1288,3 +1288,31 @@ msgstr "Adaptive"
 msgctxt "#33270"
 msgid "None (Kodi default)"
 msgstr "None (Kodi default)"
+
+msgctxt "#33275"
+msgid "Jellyfin: Record..."
+msgstr "Jellyfin: Record..."
+
+msgctxt "#33276"
+msgid "Record"
+msgstr "Record"
+
+msgctxt "#33277"
+msgid "Record Series"
+msgstr "Record Series"
+
+msgctxt "#33278"
+msgid "Scheduled Timers"
+msgstr "Scheduled Timers"
+
+msgctxt "#33279"
+msgid "Cancel Timer"
+msgstr "Cancel Timer"
+
+msgctxt "#33280"
+msgid "Series Timer Rules"
+msgstr "Series Timer Rules"
+
+msgctxt "#33281"
+msgid "Cancel Series Timer"
+msgstr "Cancel Series Timer"
