@@ -125,14 +125,21 @@ Jellyfin Live TV channels are exposed to Kodi's EPG via **IPTV Simple Client** a
 - **`livetv.force_transcode`** (default off): When enabled, forces all live TV streams through jellyfin-server's ffmpeg remux pipeline (`/videos/{id}/live.m3u8`). When disabled (default), jellyfin-server proxies the original stream directly to Kodi without remuxing.
 - **`livetv.inputstream`**: Selects which Kodi input stream addon handles live TV playback:
   - `0` — FFmpeg Direct (`inputstream.ffmpegdirect`): supports timeshift/pause. Default.
-  - `1` — Adaptive (`inputstream.adaptive`): more tolerant of timestamp errors but may lack video dimensions for 4K streams from jellyfin-server's HLS manifest.
+  - `1` — Adaptive (`inputstream.adaptive`): can play HD but fails on 4K — Jellyfin's HLS manifest lacks `#EXT-X-STREAM-INF` resolution metadata, so the hardware decoder gets null dimensions.
   - `2` — None: uses Kodi's built-in player.
 
-Both settings are checked in `PlayUtils.get()` (`jellyfin_kodi/helper/playutils.py`), which is the single code path for all live TV playback (addon browsing and EPG).
+`livetv.force_transcode` is checked at play time in `default.py` (mode `play`), which passes `force_transcode=True` through to `PlayUtils` — the same code path as the "Jellyfin Transcode" context menu. `livetv.inputstream` is checked in `Actions.listitem_channel()` in `objects/actions.py`.
 
 ### Direct play for live TV
 
 jellyfin-server returns `127.0.0.1` in the direct play path for live TV streams (the stream is proxied through the server). The jellyfin-kodi addon replaces this with the actual server hostname in `PlayUtils.direct_play()` so remote clients can reach it. The `RequiresClosing` flag on the source is used to track `LiveStreamId` for lifecycle management but no longer forces the transcode path.
+
+### Device profile and HLS segment format
+
+The device profile in `PlayUtils.get_device_profile()` tells Jellyfin which container/codec combinations the client supports. For `TvChannel` items, a higher-priority transcoding profile is inserted requesting `Container: "ts"` (MPEG-TS segments) with `Protocol: "hls"`. This is important because:
+
+- **fMP4 segments cause stuttering on 4K HEVC**: ffmpeg's fMP4 muxer struggles with HEVC copy-mode segmentation, producing stuttering playback. MPEG-TS segments avoid this since it's a TS→TS remux with no container conversion.
+- The TvChannel profile must include the full codec lists from `get_transcoding_video_codec()` and `get_transcoding_audio_codec()`. If a codec (e.g. HEVC) is missing, the server falls back to the general `m3u8` (fMP4) profile.
 
 ### Jellyfin LiveTv API gotchas
 
@@ -142,8 +149,7 @@ jellyfin-server returns `127.0.0.1` in the direct play path for live TV streams 
 
 ## Branches
 
-- **master** — stable base with Live TV / IPTV Manager channel + EPG integration
-- **feature/livetv-recording** — adds EPG recording context menu, direct play support, input stream selection, and API bug fixes
+- **master** — stable base with Live TV / IPTV Manager integration, EPG recording, direct play, and input stream selection
 
 ## CI/CD
 
