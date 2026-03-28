@@ -279,6 +279,10 @@ class PlayUtils(object):
                 for p in url_parsed
                 for k, _, v in [p.partition("=")]
             ]
+
+            if "av1" in self.get_transcoding_video_codec():
+                url_parsed = [p for p in url_parsed if not p.startswith("SegmentContainer=")]
+
             params = "%s%s" % ("&".join(url_parsed), manual_tracks)
             params += "&VideoBitrate=%s&AudioBitrate=%s" % (
                 video_bitrate,
