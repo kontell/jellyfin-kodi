@@ -668,6 +668,75 @@
 				</setting>
 			</group>
 		</category>
+		<category id="livetv" label="33262">
+			<group id="1">
+
+				<setting id="iptv.install" type="action" label="33263" help="">
+					<level>0</level>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">!System.HasAddon(service.iptv.manager)</condition>
+						</dependency>
+					</dependencies>
+					<control type="button" format="action">
+						<data>InstallAddon(service.iptv.manager)</data>
+					</control>
+				</setting>
+
+				<setting id="iptv.enabled" type="boolean" label="33264" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">System.HasAddon(service.iptv.manager)</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+
+				<setting id="iptv.epg_days" type="integer" label="33266" help="">
+					<level>0</level>
+					<default>3</default>
+					<constraints>
+						<minimum>1</minimum>
+						<step>1</step>
+						<maximum>7</maximum>
+					</constraints>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">System.HasAddon(service.iptv.manager)</condition>
+						</dependency>
+						<dependency type="enable">
+							<condition operator="is" setting="iptv.enabled">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="slider" format="integer"/>
+				</setting>
+
+			</group>
+
+			<group id="2">
+				<visible>false</visible>
+
+				<setting id="iptv.channels_uri" type="string" label="" help="">
+					<level>0</level>
+					<default>plugin://plugin.video.jellyfin/?mode=iptv_channels</default>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string" />
+				</setting>
+
+				<setting id="iptv.epg_uri" type="string" label="" help="">
+					<level>0</level>
+					<default>plugin://plugin.video.jellyfin/?mode=iptv_epg</default>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string" />
+				</setting>
+			</group>
+		</category>
 		<category id="advanced" label="30022" help="">
 			<group id="1">
 				<setting id="logLevel" type="integer" label="30004" help="">

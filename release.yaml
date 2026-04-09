@@ -49,3 +49,6 @@ dependencies:
       version: '0.0.5+matrix.1'
     - addon: 'script.module.websocket'
       version: '1.6.4'
+    - addon: 'service.iptv.manager'
+      version: '0.5.0'
+      optional: 'true'

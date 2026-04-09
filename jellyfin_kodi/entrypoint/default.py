@@ -112,6 +112,19 @@ class Events(object):
                 playlist=params.get("playlist") == "true",
             )
 
+        elif mode == "iptv_channels":
+            from ..livetv.iptvmanager import IPTVManager
+            from ..livetv.livetv import LiveTV
+            port = int(params.get("port", 0))
+            IPTVManager(port, LiveTV(jellyfin_client)).send_channels()
+
+        elif mode == "iptv_epg":
+            from ..livetv.iptvmanager import IPTVManager
+            from ..livetv.livetv import LiveTV
+            port = int(params.get("port", 0))
+            days = int(xbmcaddon.Addon().getSetting("iptv.epg_days") or 3)
+            IPTVManager(port, LiveTV(jellyfin_client)).send_epg_days(days)
+
         elif mode == "playlist":
             api_client.post_session(
                 api_client.config.data["app.session"],

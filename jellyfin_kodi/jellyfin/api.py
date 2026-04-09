@@ -522,6 +522,18 @@ class API(object):
             LOG.warning("Error fetching media segments: %s", e)
             return None
 
+    def get_channels(self, params=None):
+        """GET /LiveTv/Channels"""
+        params = params or {}
+        params.setdefault("UserId", "{UserId}")
+        return self._get("LiveTv/Channels", params)
+
+    def get_programs(self, params=None):
+        """POST /LiveTv/Programs"""
+        params = params or {}
+        params.setdefault("UserId", "{UserId}")
+        return self._post("LiveTv/Programs", json.dumps(params))
+
     def quick_connect_initiate(self, server_url):
         """Initiate Quick Connect and return {Secret, Code, Authenticated}."""
         headers = self.get_default_headers()

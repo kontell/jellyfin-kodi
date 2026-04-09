@@ -1257,3 +1257,19 @@ msgctxt "#33261"
 msgid "Off"
 msgstr "Off"
 
+msgctxt "#33262"
+msgid "Live TV / IPTV Manager"
+msgstr "Live TV / IPTV Manager"
+
+msgctxt "#33263"
+msgid "Install IPTV Manager"
+msgstr "Install IPTV Manager"
+
+msgctxt "#33264"
+msgid "Enable IPTV Manager integration"
+msgstr "Enable IPTV Manager integration"
+
+msgctxt "#33266"
+msgid "EPG days to fetch"
+msgstr "EPG days to fetch"
+
