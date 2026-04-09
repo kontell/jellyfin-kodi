@@ -668,6 +668,54 @@
 				</setting>
 			</group>
 		</category>
+		<category id="livetv" label="33271">
+			<group id="1">
+
+				<setting id="livetv.force_transcode" type="boolean" label="33272" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+
+				<setting id="livetv.inputstream" type="integer" label="33273" help="">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="33274">0</option>
+							<option label="33269">1</option>
+							<option label="33270">2</option>
+						</options>
+					</constraints>
+					<control type="spinner" format="string"/>
+				</setting>
+
+				<setting id="livetv.timeshift" type="boolean" label="33282" help="">
+					<level>0</level>
+					<default>true</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="livetv.inputstream">0</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+
+				<setting id="livetv.ffmpegdirect_settings" type="action" label="33285" help="">
+					<level>0</level>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="livetv.inputstream">0</condition>
+						</dependency>
+					</dependencies>
+					<control type="button" format="action">
+						<data>Addon.OpenSettings(inputstream.ffmpegdirect)</data>
+						<close>true</close>
+					</control>
+				</setting>
+
+			</group>
+		</category>
 		<category id="advanced" label="30022" help="">
 			<group id="1">
 				<setting id="logLevel" type="integer" label="30004" help="">

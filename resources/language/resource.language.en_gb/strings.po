@@ -1257,3 +1257,35 @@ msgctxt "#33261"
 msgid "Off"
 msgstr "Off"
 
+
+msgctxt "#33269"
+msgid "Adaptive"
+msgstr "Adaptive"
+
+msgctxt "#33270"
+msgid "Kodi internal"
+msgstr "Kodi internal"
+
+msgctxt "#33271"
+msgid "Live TV"
+msgstr "Live TV"
+
+msgctxt "#33272"
+msgid "Force remux live streams"
+msgstr "Force remux live streams"
+
+msgctxt "#33273"
+msgid "InputStream"
+msgstr "InputStream"
+
+msgctxt "#33274"
+msgid "FFmpegDirect"
+msgstr "FFmpegDirect"
+
+msgctxt "#33282"
+msgid "Enable timeshift"
+msgstr "Enable timeshift"
+
+msgctxt "#33285"
+msgid "FFmpegDirect settings..."
+msgstr "FFmpegDirect settings..."
