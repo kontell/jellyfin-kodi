@@ -1285,3 +1285,51 @@ msgstr "La conexión rápida no está disponible en este servidor"
 msgctxt "#33261"
 msgid "Off"
 msgstr "Apagado"
+
+msgctxt "#33262"
+msgid "Live TV / IPTV Manager"
+msgstr ""
+
+msgctxt "#33263"
+msgid "Install IPTV Manager"
+msgstr ""
+
+msgctxt "#33264"
+msgid "Enable IPTV Manager integration"
+msgstr ""
+
+msgctxt "#33266"
+msgid "EPG days to fetch"
+msgstr ""
+
+msgctxt "#33269"
+msgid "Adaptive"
+msgstr ""
+
+msgctxt "#33270"
+msgid "Kodi internal"
+msgstr ""
+
+msgctxt "#33271"
+msgid "Live TV"
+msgstr ""
+
+msgctxt "#33272"
+msgid "Force remux live streams"
+msgstr ""
+
+msgctxt "#33273"
+msgid "InputStream"
+msgstr ""
+
+msgctxt "#33274"
+msgid "FFmpegDirect"
+msgstr ""
+
+msgctxt "#33282"
+msgid "Enable timeshift"
+msgstr ""
+
+msgctxt "#33285"
+msgid "FFmpegDirect settings..."
+msgstr ""
