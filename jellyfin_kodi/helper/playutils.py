@@ -193,6 +193,16 @@ class PlayUtils(object):
             if source.get("RequiresClosing"):
                 source["Protocol"] = "LiveTV"
 
+        # If the server returned a TranscodingUrl and says no direct play,
+        # use the transcode path (e.g. bitrate limit exceeded for live TV)
+        if (
+            not source["SupportsDirectPlay"]
+            and source.get("TranscodingUrl")
+        ):
+            source["SupportsDirectStream"] = False
+            if source.get("RequiresClosing"):
+                source["Protocol"] = "LiveTV"
+
         if (
             source.get("Protocol") == "Http"
             or source["SupportsDirectPlay"]
@@ -280,9 +290,6 @@ class PlayUtils(object):
                 for k, _, v in [p.partition("=")]
             ]
 
-            if "av1" in self.get_transcoding_video_codec():
-                url_parsed = [p for p in url_parsed if not p.startswith("SegmentContainer=")]
-
             params = "%s%s" % ("&".join(url_parsed), manual_tracks)
             params += "&VideoBitrate=%s&AudioBitrate=%s" % (
                 video_bitrate,
@@ -290,6 +297,10 @@ class PlayUtils(object):
             )
 
             if "av1" in self.get_transcoding_video_codec():
+                # Strip existing SegmentContainer before adding mp4
+                url_parsed_final = params.split("&")
+                url_parsed_final = [p for p in url_parsed_final if not p.startswith("SegmentContainer=")]
+                params = "&".join(url_parsed_final)
                 params += "&SegmentContainer=mp4"
 
             video_type = "live" if source["Protocol"] == "LiveTV" else "master"
@@ -520,20 +531,50 @@ class PlayUtils(object):
             profile["DirectPlayProfiles"] = []
 
         if self.item["Type"] == "TvChannel":
-            profile["TranscodingProfiles"].insert(
-                0,
-                {
-                    "Container": "ts",
-                    "Type": "Video",
-                    "AudioCodec": self.get_transcoding_audio_codec(),
-                    "VideoCodec": self.get_transcoding_video_codec(),
-                    "Context": "Streaming",
-                    "Protocol": "hls",
-                    "MaxAudioChannels": settings("audioMaxChannels"),
-                    "MinSegments": "1",
-                    "BreakOnNonKeyFrames": True,
-                },
-            )
+            force_remux = self.info["ForceTranscode"]
+            max_bitrate = self.get_max_bitrate()
+            bitrate_unlimited = (max_bitrate >= 2147483000)
+            preferred_video = self.get_transcoding_video_codec().split(",")[0]
+            audio_codecs = self.get_transcoding_audio_codec()
+            all_video = self.get_transcoding_video_codec()
+            max_channels = settings("audioMaxChannels")
+
+            base = {
+                "Type": "Video",
+                "Context": "Streaming",
+                "Protocol": "hls",
+                "MaxAudioChannels": max_channels,
+                "MinSegments": "1",
+                "BreakOnNonKeyFrames": True,
+            }
+
+            # Clear existing TranscodingProfiles for live TV — we build our own
+            profile["TranscodingProfiles"] = []
+
+            if force_remux and bitrate_unlimited:
+                # Remux: codec-copy all non-AV1 codecs into TS
+                non_av1 = ",".join(c for c in all_video.split(",") if c != "av1")
+                if non_av1:
+                    profile["TranscodingProfiles"].append({
+                        **base, "Container": "ts",
+                        "AudioCodec": audio_codecs, "VideoCodec": non_av1,
+                    })
+                profile["DirectPlayProfiles"] = []
+            else:
+                # Transcode to preferred codec (bitrate limited or force remux with limit)
+                # AV1 → fMP4, everything else → TS
+                container = "mp4" if preferred_video == "av1" else "ts"
+                profile["TranscodingProfiles"].append({
+                    **base, "Container": container,
+                    "AudioCodec": audio_codecs, "VideoCodec": preferred_video,
+                })
+
+                # Direct play only when no force remux AND no bitrate limit.
+                # Jellyfin ignores MaxStreamingBitrate for Protocol=Http DirectPlay.
+                if not force_remux and bitrate_unlimited:
+                    pass  # Keep existing DirectPlayProfiles
+                else:
+                    profile["DirectPlayProfiles"] = []
 
         return profile
 

@@ -1246,16 +1246,16 @@ msgid "Live TV"
 msgstr "Live TV"
 
 msgctxt "#33272"
-msgid "Force transcode live streams"
-msgstr "Force transcode live streams"
+msgid "Force remux live streams"
+msgstr "Force remux live streams"
 
 msgctxt "#33273"
-msgid "Input stream"
-msgstr "Input stream"
+msgid "InputStream"
+msgstr "InputStream"
 
 msgctxt "#33274"
-msgid "FFmpeg Direct"
-msgstr "FFmpeg Direct"
+msgid "FFmpegDirect"
+msgstr "FFmpegDirect"
 
 msgctxt "#33263"
 msgid "Install IPTV Manager"
@@ -1286,8 +1286,8 @@ msgid "Adaptive"
 msgstr "Adaptive"
 
 msgctxt "#33270"
-msgid "None (Kodi default)"
-msgstr "None (Kodi default)"
+msgid "Kodi internal"
+msgstr "Kodi internal"
 
 msgctxt "#33275"
 msgid "Jellyfin: Record..."
@@ -1316,3 +1316,19 @@ msgstr "Series Timer Rules"
 msgctxt "#33281"
 msgid "Cancel Series Timer"
 msgstr "Cancel Series Timer"
+
+msgctxt "#33282"
+msgid "Enable timeshift"
+msgstr "Enable timeshift"
+
+msgctxt "#33283"
+msgid "In-progress recording input stream"
+msgstr "In-progress recording input stream"
+
+msgctxt "#33284"
+msgid "Enable context menu recording"
+msgstr "Enable context menu recording"
+
+msgctxt "#33285"
+msgid "FFmpegDirect settings..."
+msgstr "FFmpegDirect settings..."

@@ -53,7 +53,14 @@ class LiveTV:
             return []
 
         now  = datetime.now(timezone.utc)
-        end  = now + timedelta(days=days)
+        # Start from midnight today (local time converted to UTC)
+        import time
+        local_now = datetime.now()
+        midnight_local = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        utc_offset = timedelta(seconds=time.timezone if time.daylight == 0 else time.altzone)
+        start = midnight_local + utc_offset
+        start = start.replace(tzinfo=timezone.utc)
+        end  = start + timedelta(days=days)
         all_prg: list[dict] = []
 
         channel_ids = [ch["Id"] for ch in channels]
@@ -69,7 +76,7 @@ class LiveTV:
                 with _quiet():
                     data = self._api.get_programs({
                         "ChannelIds":   ",".join(chunk),
-                        "MinStartDate": now.isoformat(),
+                        "MinStartDate": start.isoformat(),
                         "MaxEndDate":   end.isoformat(),
                         "EnableImages": True,
                         "Fields":       "Overview",

@@ -25,6 +25,11 @@ class ContextRecord:
     """
 
     def __init__(self):
+        from ..helper import settings
+        if not settings("livetv.context_record.bool"):
+            LOG.info("context_record: disabled in settings")
+            return
+
         channel_name = xbmc.getInfoLabel("ListItem.ChannelName")
         title = xbmc.getInfoLabel("ListItem.Title")
         start_date = xbmc.getInfoLabel("ListItem.StartDate")

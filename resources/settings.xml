@@ -669,7 +669,7 @@
 			</group>
 		</category>
 		<category id="livetv" label="33271">
-				<group id="1" label="33271">
+				<group id="1">
 
 						<setting id="iptv.install" type="action" label="33263" help="">
 								<level>0</level>
@@ -726,6 +726,36 @@
 										</options>
 								</constraints>
 								<control type="spinner" format="string"/>
+						</setting>
+
+						<setting id="livetv.timeshift" type="boolean" label="33282" help="">
+								<level>0</level>
+								<default>true</default>
+								<dependencies>
+										<dependency type="visible">
+												<condition operator="is" setting="livetv.inputstream">0</condition>
+										</dependency>
+								</dependencies>
+								<control type="toggle"/>
+						</setting>
+
+						<setting id="livetv.ffmpegdirect_settings" type="action" label="33285" help="">
+								<level>0</level>
+								<dependencies>
+										<dependency type="visible">
+												<condition operator="is" setting="livetv.inputstream">0</condition>
+										</dependency>
+								</dependencies>
+								<control type="button" format="action">
+										<data>Addon.OpenSettings(inputstream.ffmpegdirect)</data>
+										<close>true</close>
+								</control>
+						</setting>
+
+						<setting id="livetv.context_record" type="boolean" label="33284" help="">
+								<level>0</level>
+								<default>true</default>
+								<control type="toggle"/>
 						</setting>
 
 				</group>

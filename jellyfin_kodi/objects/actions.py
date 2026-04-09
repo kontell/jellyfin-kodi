@@ -644,7 +644,10 @@ class Actions(object):
             listitem.setProperty("inputstream", "inputstream.ffmpegdirect")
             listitem.setProperty("inputstream.ffmpegdirect.manifest_type", "hls")
             listitem.setProperty("inputstream.ffmpegdirect.is_realtime_stream", "true")
-            listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+            if settings("livetv.timeshift.bool"):
+                listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "timeshift")
+            else:
+                listitem.setProperty("inputstream.ffmpegdirect.stream_mode", "default")
         elif inputstream == "1":
             listitem.setProperty("inputstream", "inputstream.adaptive")
             listitem.setProperty("inputstream.adaptive.manifest_type", "hls")
