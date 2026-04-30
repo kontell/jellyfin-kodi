@@ -64,10 +64,12 @@ class Monitor(xbmc.Monitor):
             response = server.jellyfin.get_items([item_id])
         except Exception as error:
             LOG.warning("syncplay item fetch failed for %s: %s", item_id, error)
+            self._syncplay_notify_access_denied()
             return
         items = (response or {}).get("Items") or []
         if not items:
             LOG.info("syncplay item %s returned no metadata", item_id)
+            self._syncplay_notify_access_denied()
             return
         server_id = server.config.data.get("auth.server-id") or server.config.data.get(
             "auth.server"
@@ -80,6 +82,15 @@ class Monitor(xbmc.Monitor):
             None,  # AudioStreamIndex
             None,  # SubtitleStreamIndex
         ).start()
+
+    def _syncplay_notify_access_denied(self):
+        """Surface a toast when the group is watching content we can't reach."""
+        try:
+            from .syncplay import notifications
+
+            notifications.notify_error("LibraryAccessDenied")
+        except Exception as error:
+            LOG.debug("syncplay access-denied notification failed: %s", error)
 
     def onScanStarted(self, library):
         LOG.info("-->[ kodi scan/%s ]", library)

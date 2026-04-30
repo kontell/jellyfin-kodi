@@ -329,6 +329,7 @@ class SyncPlayController(object):
     def _ping_loop(self):
         monitor = xbmc.Monitor()
         last_rtt_ms = 0
+        consecutive_failures = 0
         while not self._stop_event.is_set() and self.in_group:
             try:
                 send_t = self._monotonic()
@@ -337,7 +338,35 @@ class SyncPlayController(object):
                 self.clock.update_from_ping(send_t, recv_t)
                 if self.clock.rtt_ms is not None:
                     last_rtt_ms = self.clock.rtt_ms
+                consecutive_failures = 0
             except Exception as error:
                 LOG.debug("Ping failed: %s", error)
+                consecutive_failures += 1
+                if consecutive_failures >= 3:
+                    self._validate_group_membership()
+                    consecutive_failures = 0
             if monitor.waitForAbort(PING_INTERVAL_S):
                 break
+
+    def _validate_group_membership(self):
+        """After repeated ping failures, confirm we're still in the group.
+
+        If the WebSocket dropped and the server timed our session out of
+        the group during the disconnect, we'd otherwise stay stuck thinking
+        we're still members. ``/SyncPlay/List`` lists the groups the user
+        can see, including the one they're in; if our ``group_id`` isn't
+        in there anymore, we've been kicked.
+        """
+        gid = self._group_id
+        if gid is None:
+            return
+        try:
+            groups = self.api.list_groups() or []
+        except Exception as error:
+            LOG.debug("Group validation list call failed: %s", error)
+            return
+        if any((g or {}).get("GroupId") == gid for g in groups):
+            return
+        LOG.info("SyncPlay group %s no longer accessible; resetting state", gid)
+        self._reset_group_state()
+        self._teardown_engine()

@@ -32,6 +32,18 @@ SYNC_TOLERANCE_S = 0.5
 DRIFT_SEEK_S = 2.0
 DRIFT_TICK_S = 0.5
 
+# Tempo bounds. Kodi's Player.SetTempo accepts 0.75-1.55 by default
+# (see CProcessInfo::IsTempoAllowed); we stay well inside that for
+# imperceptible audio-pitch changes.
+MIN_TEMPO = 0.95
+MAX_TEMPO = 1.05
+# Convergence horizon when applying tempo. drift / TEMPO_CONVERGE_S gives
+# the tempo offset from 1.0; 5 s means a 250 ms drift converges over ~5 s
+# at a 1.05x rate.
+TEMPO_CONVERGE_S = 5.0
+# Threshold below which we treat a tempo change as a no-op.
+TEMPO_DEADBAND = 0.005
+
 # 100-ns ticks per second (Jellyfin's PositionTicks unit).
 TICKS_PER_SECOND = 10_000_000
 
@@ -117,6 +129,15 @@ class PlayerProxy(object):
     def stop(self):
         raise NotImplementedError
 
+    def set_tempo(self, tempo):
+        """Apply a playback tempo (1.0 == normal). Returns True on success.
+
+        Kodi's ``Player.SetTempo`` rejects when ``videoplayer.usedisplayasclock``
+        is off or the stream is flagged real-time, so a False return is
+        normal — the engine falls back to seek-only correction.
+        """
+        return False
+
 
 class XbmcPlayerProxy(PlayerProxy):
     """Production implementation backed by xbmc.Player and JSON-RPC."""
@@ -176,6 +197,21 @@ class XbmcPlayerProxy(PlayerProxy):
         except Exception as error:
             LOG.warning("stop() failed: %s", error)
 
+    def set_tempo(self, tempo):
+        from ..helper import JSONRPC
+
+        try:
+            result = (
+                JSONRPC("Player.SetTempo").execute(
+                    {"playerid": 1, "tempo": float(tempo)}
+                )
+                or {}
+            )
+        except Exception as error:
+            LOG.debug("Player.SetTempo raised: %s", error)
+            return False
+        return "error" not in result
+
 
 # ----------------------------------------------------------------------
 # SyncEngine
@@ -217,6 +253,12 @@ class SyncEngine(object):
         self._target_position_ticks = None  # last server-known position
         self._target_anchor_monotonic = None  # local monotonic when target was set
         self._target_is_playing = False
+
+        # Tempo-correction state. ``_tempo_supported`` is tri-state:
+        # None means we haven't probed yet; True/False is the cached probe
+        # result for the current playback session.
+        self._tempo_supported = None
+        self._tempo_active = 1.0
 
         self._drift_thread = None
         self._stop_event = threading.Event()
@@ -322,6 +364,11 @@ class SyncEngine(object):
         with self._lock:
             self._current_item_id = item_id
             self._is_playing_locally = True
+            # Tempo support is per-stream (depends on real-time flag, codec,
+            # and the user's "Sync playback to display" setting). Re-probe
+            # for each new item.
+            self._tempo_supported = None
+            self._tempo_active = 1.0
         self._post_state(is_playing=True, position_seconds=0.0, kind="buffer")
         # Once the player reports a non-zero position the controller can post
         # Ready. For Phase 3 we post Ready immediately after Buffer; the server
@@ -361,6 +408,8 @@ class SyncEngine(object):
     def on_local_stopped(self):
         with self._lock:
             self._is_playing_locally = False
+            self._tempo_supported = None
+            self._tempo_active = 1.0
 
     # ------------------------------------------------------------------
     # Internal: command execution
@@ -439,6 +488,9 @@ class SyncEngine(object):
         drift_ms = drift * 1000.0
 
         if abs(drift) < SYNC_TOLERANCE_S:
+            # Back inside tolerance: drop any active tempo correction so we
+            # don't overshoot in the other direction.
+            self._reset_tempo()
             self._publish_badge(drift_ms=drift_ms)
             return
         if abs(drift) >= DRIFT_SEEK_S:
@@ -451,6 +503,13 @@ class SyncEngine(object):
             self._with_suppressed_echo(
                 lambda: self._player.seek_seconds(expected_seconds)
             )
+            self._reset_tempo()
+            self._publish_badge(drift_ms=drift_ms)
+            return
+        # Mid-band drift: try to absorb with a small tempo nudge. If tempo
+        # isn't supported on this stream, the drift will keep growing until
+        # it crosses DRIFT_SEEK_S and we seek instead.
+        self._apply_tempo_for_drift(drift)
         self._publish_badge(drift_ms=drift_ms)
 
     # ------------------------------------------------------------------
@@ -499,6 +558,51 @@ class SyncEngine(object):
 
     def _in_group(self):
         return self._controller.in_group
+
+    def _apply_tempo_for_drift(self, drift):
+        """Nudge playback rate to absorb mid-band drift.
+
+        Returns True if a tempo change was applied (or already at target);
+        False if tempo isn't supported on this stream. drift > 0 means the
+        local player is ahead of the group, so we slow down (tempo < 1.0).
+        """
+        with self._lock:
+            supported = self._tempo_supported
+        if supported is None:
+            supported = bool(self._player.set_tempo(1.0))
+            with self._lock:
+                self._tempo_supported = supported
+                self._tempo_active = 1.0
+            if not supported:
+                return False
+        elif not supported:
+            return False
+
+        target = 1.0 - max(-1.0, min(1.0, drift / TEMPO_CONVERGE_S))
+        target = max(MIN_TEMPO, min(MAX_TEMPO, target))
+        with self._lock:
+            current = self._tempo_active
+        if abs(target - current) < TEMPO_DEADBAND:
+            return True
+        if self._player.set_tempo(target):
+            with self._lock:
+                self._tempo_active = target
+            return True
+        # Stream changed under us and tempo is no longer accepted.
+        with self._lock:
+            self._tempo_supported = False
+            self._tempo_active = 1.0
+        return False
+
+    def _reset_tempo(self):
+        with self._lock:
+            current = self._tempo_active
+            supported = self._tempo_supported
+        if not supported or abs(current - 1.0) < TEMPO_DEADBAND:
+            return
+        if self._player.set_tempo(1.0):
+            with self._lock:
+                self._tempo_active = 1.0
 
     def _publish_badge(self, drift_ms):
         """Push current state to the window properties the overlay reads."""

@@ -53,10 +53,12 @@ class FakeClock(object):
 
 
 class FakeController(object):
-    def __init__(self, in_group=True):
+    def __init__(self, in_group=True, group_info=None, state=None):
         self.api = FakeApi()
         self.clock = FakeClock()
         self.in_group = in_group
+        self.group_info = group_info or {}
+        self.state = state
 
 
 class FakeScheduler(object):
@@ -72,10 +74,11 @@ class FakeScheduler(object):
 
 
 class FakePlayer(object):
-    def __init__(self, playing=True, position=0.0, item_id=None):
+    def __init__(self, playing=True, position=0.0, item_id=None, tempo_supported=True):
         self.playing = playing
         self.position = position
         self.item_id = item_id
+        self.tempo_supported = tempo_supported
         self.calls = []
 
     def is_playing(self):
@@ -102,6 +105,10 @@ class FakePlayer(object):
     def stop(self):
         self.calls.append(("stop",))
         self.playing = False
+
+    def set_tempo(self, tempo):
+        self.calls.append(("set_tempo", tempo))
+        return self.tempo_supported
 
 
 # ----------------------------------------------------------------------
@@ -389,10 +396,10 @@ def test_drift_above_seek_threshold_corrects():
     assert player.calls == [("seek", pytest.approx(10.0))]
 
 
-def test_drift_between_tolerance_and_seek_does_nothing_in_phase3():
-    """Phase 3 only does seek-based correction. Mid-range drift is silent."""
+def test_drift_between_tolerance_and_seek_uses_tempo_when_unsupported_falls_through():
+    """Mid-range drift on a stream that rejects tempo never reaches the seek path."""
     controller = FakeController()
-    player = FakePlayer(playing=True, position=11.0)
+    player = FakePlayer(playing=True, position=11.0, tempo_supported=False)
     engine = SyncEngine(
         controller,
         player=player,
@@ -406,7 +413,8 @@ def test_drift_between_tolerance_and_seek_does_nothing_in_phase3():
     # Drift = 1s — above SYNC_TOLERANCE_S but below DRIFT_SEEK_S.
     assert SYNC_TOLERANCE_S <= 1.0 < DRIFT_SEEK_S
     engine._tick()
-    assert player.calls == []
+    # The probe is attempted; nothing else.
+    assert player.calls == [("set_tempo", 1.0)]
 
 
 def test_drift_loop_skips_when_not_playing():
@@ -479,3 +487,115 @@ def test_render_badge_state_waiting():
 
 def test_render_badge_state_unknown_returns_empty():
     assert render_badge_state(None, drift_ms=42) == ""
+
+
+# ----------------------------------------------------------------------
+# Tempo-based drift correction
+# ----------------------------------------------------------------------
+
+
+def _seed_target(engine, ticks=10 * TICKS_PER_SECOND, anchor=100.0):
+    engine._target_position_ticks = ticks
+    engine._target_anchor_monotonic = anchor
+    engine._target_is_playing = True
+
+
+def test_mid_band_drift_applies_tempo_when_supported(make_engine):
+    # Player is 1.0s ahead of expected: tempo should pull it back.
+    engine, _, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=11.0, tempo_supported=True)
+    )
+    _seed_target(engine)
+
+    engine._tick()
+
+    # First call is the probe (tempo=1.0); second is the corrective tempo.
+    tempo_calls = [c for c in player.calls if c[0] == "set_tempo"]
+    assert len(tempo_calls) == 2
+    assert tempo_calls[0] == ("set_tempo", 1.0)
+    # Drift = +1.0 / 5.0 convergence horizon = -0.2 offset, clamped to 0.95.
+    assert tempo_calls[1] == ("set_tempo", pytest.approx(0.95))
+    # No corrective seek in this band.
+    assert ("seek", pytest.approx(10.0)) not in player.calls
+
+
+def test_mid_band_drift_falls_through_when_tempo_unsupported(make_engine):
+    engine, _, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=11.0, tempo_supported=False)
+    )
+    _seed_target(engine)
+
+    engine._tick()
+
+    # Probe attempt at 1.0 fails; no corrective tempo applied; no seek
+    # because we're not over the seek threshold.
+    tempo_calls = [c for c in player.calls if c[0] == "set_tempo"]
+    assert tempo_calls == [("set_tempo", 1.0)]
+    assert all(c[0] != "seek" for c in player.calls)
+
+
+def test_returning_to_tolerance_resets_tempo(make_engine):
+    engine, _, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=11.0, tempo_supported=True)
+    )
+    _seed_target(engine)
+
+    # First tick applies tempo.
+    engine._tick()
+    player.calls.clear()
+
+    # Now drift returns to tolerance.
+    player.position = 10.05
+    engine._tick()
+
+    # Tempo should be restored to 1.0.
+    assert ("set_tempo", 1.0) in player.calls
+
+
+def test_seek_threshold_resets_tempo(make_engine):
+    engine, _, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=20.0, tempo_supported=True)
+    )
+    _seed_target(engine)
+    # Pre-arm a non-1.0 tempo so we can observe the reset.
+    engine._tempo_supported = True
+    engine._tempo_active = 0.97
+
+    engine._tick()
+
+    # Should seek and reset tempo to 1.0.
+    assert ("seek", pytest.approx(10.0)) in player.calls
+    assert ("set_tempo", 1.0) in player.calls
+
+
+def test_play_started_re_probes_tempo(make_engine):
+    engine, controller, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=11.0, tempo_supported=True)
+    )
+    # Cache a stale "unsupported" probe.
+    engine._tempo_supported = False
+    _seed_target(engine)
+
+    # New playback session.
+    engine.on_local_play_started({"Id": "abc"})
+    # Cache should be reset.
+    assert engine._tempo_supported is None
+
+    # And a tick now re-probes successfully.
+    engine._tick()
+    tempo_calls = [c for c in player.calls if c[0] == "set_tempo"]
+    assert tempo_calls and tempo_calls[0] == ("set_tempo", 1.0)
+
+
+def test_tempo_clamped_to_min_max(make_engine):
+    # Drift large enough to push tempo well beyond the clamp.
+    engine, _, player, _ = make_engine(
+        player=FakePlayer(playing=True, position=10.0 + 1.5, tempo_supported=True)
+    )
+    _seed_target(engine)
+
+    engine._tick()
+
+    tempo_calls = [c for c in player.calls if c[0] == "set_tempo"]
+    # Probe + clamped tempo applied.
+    assert tempo_calls[-1][1] == pytest.approx(0.95)
