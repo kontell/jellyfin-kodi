@@ -195,6 +195,10 @@ class Events(object):
             event("RemoveServer", {"Id": server})
         elif mode == "settings":
             xbmc.executebuiltin("Addon.OpenSettings(plugin.video.jellyfin)")
+        elif mode == "syncplay_groups":
+            from ..syncplay import open_groups_dialog
+
+            open_groups_dialog(api_client)
         elif mode == "adduser":
             add_user(api_client)
         elif mode == "updatepassword":
@@ -315,8 +319,20 @@ def listing():
                 context=context,
             )
 
-    directory(translate(33278), "plugin://plugin.video.jellyfin/?mode=livetv_timers", True)
-    directory(translate(33280), "plugin://plugin.video.jellyfin/?mode=livetv_series_timers", True)
+    directory(
+        translate(33278), "plugin://plugin.video.jellyfin/?mode=livetv_timers", True
+    )
+    directory(
+        translate(33280),
+        "plugin://plugin.video.jellyfin/?mode=livetv_series_timers",
+        True,
+    )
+    if settings("syncplayEnabled.bool"):
+        directory(
+            translate(33500),
+            "plugin://plugin.video.jellyfin/?mode=syncplay_groups",
+            False,
+        )
     directory(translate(33194), "plugin://plugin.video.jellyfin/?mode=managelibs", True)
     directory(
         translate(33203), "plugin://plugin.video.jellyfin/?mode=managepaths", True
@@ -1403,13 +1419,15 @@ def livetv_timers(jellyfin_client):
         li.setArt(
             {"icon": "special://home/addons/plugin.video.jellyfin/resources/icon.png"}
         )
-        li.addContextMenuItems([
-            (
-                translate(33279),  # "Cancel Timer"
-                "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_timer&id=%s)"
-                % timer["Id"],
-            )
-        ])
+        li.addContextMenuItems(
+            [
+                (
+                    translate(33279),  # "Cancel Timer"
+                    "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_timer&id=%s)"
+                    % timer["Id"],
+                )
+            ]
+        )
 
         path = "plugin://plugin.video.jellyfin/?mode=livetv_timers"
         list_li.append((path, li, False))
@@ -1435,13 +1453,15 @@ def livetv_series_timers(jellyfin_client):
         li.setArt(
             {"icon": "special://home/addons/plugin.video.jellyfin/resources/icon.png"}
         )
-        li.addContextMenuItems([
-            (
-                translate(33281),  # "Cancel Series Timer"
-                "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_series_timer&id=%s)"
-                % timer["Id"],
-            )
-        ])
+        li.addContextMenuItems(
+            [
+                (
+                    translate(33281),  # "Cancel Series Timer"
+                    "RunPlugin(plugin://plugin.video.jellyfin/?mode=livetv_cancel_series_timer&id=%s)"
+                    % timer["Id"],
+                )
+            ]
+        )
 
         path = "plugin://plugin.video.jellyfin/?mode=livetv_series_timers"
         list_li.append((path, li, False))

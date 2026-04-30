@@ -1332,3 +1332,75 @@ msgstr "Enable context menu recording"
 msgctxt "#33285"
 msgid "FFmpegDirect settings..."
 msgstr "FFmpegDirect settings..."
+
+msgctxt "#33500"
+msgid "Watch together"
+msgstr "Watch together"
+
+msgctxt "#33501"
+msgid "Group settings"
+msgstr "Group settings"
+
+msgctxt "#33502"
+msgid "Enable SyncPlay"
+msgstr "Enable SyncPlay"
+
+msgctxt "#33520"
+msgid "Create new group..."
+msgstr "Create new group..."
+
+msgctxt "#33521"
+msgid "Group name"
+msgstr "Group name"
+
+msgctxt "#33523"
+msgid "Leave the watch group?"
+msgstr "Leave the watch group?"
+
+msgctxt "#33525"
+msgid "Joined %s"
+msgstr "Joined %s"
+
+msgctxt "#33526"
+msgid "Left watch group"
+msgstr "Left watch group"
+
+msgctxt "#33527"
+msgid "No watch groups available"
+msgstr "No watch groups available"
+
+msgctxt "#33528"
+msgid "Watch group action failed: %s"
+msgstr "Watch group action failed: %s"
+
+msgctxt "#33529"
+msgid "Group: %s"
+msgstr "Group: %s"
+
+msgctxt "#33530"
+msgid "Leave group"
+msgstr "Leave group"
+
+msgctxt "#33532"
+msgid "Idle"
+msgstr "Idle"
+
+msgctxt "#33533"
+msgid "%d watching"
+msgstr "%d watching"
+
+msgctxt "#33535"
+msgid "Playing"
+msgstr "Playing"
+
+msgctxt "#33536"
+msgid "Paused"
+msgstr "Paused"
+
+msgctxt "#33537"
+msgid "Waiting for members"
+msgstr "Waiting for members"
+
+msgctxt "#33538"
+msgid "Allow joining shared watch sessions where playback is synchronised across members. Requires SyncPlay permission on your Jellyfin user."
+msgstr "Allow joining shared watch sessions where playback is synchronised across members. Requires SyncPlay permission on your Jellyfin user."

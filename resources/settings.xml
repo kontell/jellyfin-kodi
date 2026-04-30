@@ -909,5 +909,14 @@
 				</setting>
 			</group>
 		</category>
+		<category id="syncplay" label="33500" help="">
+			<group id="1" label="33501">
+				<setting id="syncplayEnabled" type="boolean" label="33502" help="33538">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
 	</section>
 </settings>

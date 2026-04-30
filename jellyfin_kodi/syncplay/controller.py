@@ -6,11 +6,16 @@ import time
 
 import xbmc
 
-from ..helper import LazyLogger
+from ..helper import LazyLogger, window
 from .api import SyncPlayApi
 from .clock import ServerClock, parse_utc
 
 LOG = LazyLogger(__name__)
+
+
+# Window property keys exposed to the entrypoint process.
+WINDOW_GROUP_ID = "jellyfin.syncplay.groupId"
+WINDOW_GROUP_STATE = "jellyfin.syncplay.state.json"
 
 
 # Inbound WebSocket message types the controller cares about.
@@ -221,6 +226,8 @@ class SyncPlayController(object):
             LOG.warning("SyncPlay error update: %s", update_type)
             self._reset_group_state()
 
+        self._publish_state()
+
         if self._engine is not None:
             try:
                 self._engine.on_group_update(update_type, payload, data)
@@ -253,6 +260,26 @@ class SyncPlayController(object):
             self._state = None
             self._last_command = None
         self.clock.reset()
+        self._publish_state()
+
+    def _publish_state(self):
+        """Mirror group state into Kodi window properties for the UI process."""
+        try:
+            if not self.in_group:
+                window(WINDOW_GROUP_ID, clear=True)
+                window(WINDOW_GROUP_STATE, clear=True)
+                return
+            window(WINDOW_GROUP_ID, self._group_id)
+            info = self._group_info or {}
+            payload = {
+                "GroupId": self._group_id,
+                "GroupName": info.get("GroupName"),
+                "State": self._state,
+                "Participants": list(info.get("Participants") or []),
+            }
+            window(WINDOW_GROUP_STATE, payload)
+        except Exception as error:
+            LOG.debug("Failed to publish SyncPlay state: %s", error)
 
     def _start_ping_loop(self):
         if self._ping_thread is not None and self._ping_thread.is_alive():
