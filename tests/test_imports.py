@@ -104,5 +104,12 @@ def test_import_player():
     import jellyfin_kodi.player  # noqa: F401
 
 
+def test_import_syncplay():
+    import jellyfin_kodi.syncplay
+    import jellyfin_kodi.syncplay.api
+    import jellyfin_kodi.syncplay.clock
+    import jellyfin_kodi.syncplay.controller  # noqa: F401
+
+
 def test_import_views():
     import jellyfin_kodi.views  # noqa: F401

@@ -34,9 +34,21 @@ class Monitor(xbmc.Monitor):
 
         self.player = player.Player()
         self.device_id = get_device_id()
+        self.syncplay = {}
         self.listener = Listener(self)
         self.listener.start()
         xbmc.Monitor.__init__(self)
+
+    def _syncplay_controller(self, server, server_id):
+        """Get or lazily construct the SyncPlayController for a server."""
+        from .syncplay import SyncPlayController
+
+        key = server_id or "default"
+        controller = self.syncplay.get(key)
+        if controller is None:
+            controller = SyncPlayController(server)
+            self.syncplay[key] = controller
+        return controller
 
     def onScanStarted(self, library):
         LOG.info("-->[ kodi scan/%s ]", library)
@@ -64,6 +76,8 @@ class Monitor(xbmc.Monitor):
                 "Play",
                 "Playstate",
                 "GeneralCommand",
+                "SyncPlayCommand",
+                "SyncPlayGroupUpdate",
             ):
                 return
 
@@ -187,6 +201,11 @@ class Monitor(xbmc.Monitor):
 
         elif method == "VideoLibrary.OnUpdate":
             on_update(data, server)
+
+        elif method in ("SyncPlayCommand", "SyncPlayGroupUpdate"):
+            self._syncplay_controller(server, data.get("ServerId")).on_message(
+                method, data
+            )
 
     def server_instance(self, server_id=None):
 

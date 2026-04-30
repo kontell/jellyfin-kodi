@@ -531,5 +531,8 @@ class Service(xbmc.Monitor):
         if self.monitor is not None:
 
             self.monitor.listener.stop()
+            for controller in self.monitor.syncplay.values():
+                controller.shutdown()
+            self.monitor.syncplay.clear()
 
         LOG.info("---<<<[ %s ]", client.get_addon_name())
