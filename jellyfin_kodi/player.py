@@ -123,6 +123,7 @@ class Player(xbmc.Player):
             item["Server"].jellyfin.session_playing(data)
         except Exception as e:
             LOG.warning("Failed to report session playing: %s", e)
+        self._syncplay_broadcast("on_local_play_started", item)
         window("jellyfin.skip.%s.bool" % item["Id"], True)
 
         # Immediate skip check for segments starting at 0:00
@@ -315,6 +316,7 @@ class Player(xbmc.Player):
 
             self.get_file_info(current_file)["Paused"] = True
             self.report_playback()
+            self._syncplay_broadcast("on_local_pause")
             LOG.debug("-->[ paused ]")
 
     def onPlayBackResumed(self):
@@ -324,6 +326,7 @@ class Player(xbmc.Player):
 
             self.get_file_info(current_file)["Paused"] = False
             self.report_playback()
+            self._syncplay_broadcast("on_local_resume")
             LOG.debug("--<[ paused ]")
 
     def onPlayBackSeek(self, time, seek_offset):
@@ -331,6 +334,10 @@ class Player(xbmc.Player):
         if self.is_playing_file(self.get_playing_file()):
 
             self.report_playback()
+            try:
+                self._syncplay_broadcast("on_local_seek", float(self.getTime()))
+            except Exception:
+                pass
             LOG.info("--[ seek ]")
 
             # Check skip segments immediately after seek
@@ -342,6 +349,15 @@ class Player(xbmc.Player):
                     self.check_skip_segments(item, current_pos)
                 except Exception:
                     pass
+
+    def _syncplay_broadcast(self, method_name, *args, **kwargs):
+        """Fan a player event out to every active SyncPlay engine."""
+        try:
+            from .syncplay import registry
+
+            registry.broadcast(method_name, *args, **kwargs)
+        except Exception as error:
+            LOG.debug("syncplay broadcast %s failed: %s", method_name, error)
 
     def report_playback(self, report=True):
         """Report playback progress to jellyfin server.
@@ -419,11 +435,13 @@ class Player(xbmc.Player):
         """Will be called when user stops playing a file."""
         window("jellyfin_play", clear=True)
         self.stop_playback()
+        self._syncplay_broadcast("on_local_stopped")
         LOG.info("--<[ playback ]")
 
     def onPlayBackEnded(self):
         """Will be called when kodi stops playing a file."""
         self.stop_playback()
+        self._syncplay_broadcast("on_local_stopped")
         LOG.info("--<<[ playback ]")
 
     def stop_playback(self):

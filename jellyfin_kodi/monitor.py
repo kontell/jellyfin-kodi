@@ -42,13 +42,44 @@ class Monitor(xbmc.Monitor):
     def _syncplay_controller(self, server, server_id):
         """Get or lazily construct the SyncPlayController for a server."""
         from .syncplay import SyncPlayController
+        from .syncplay.engine import SyncEngine
 
         key = server_id or "default"
         controller = self.syncplay.get(key)
         if controller is None:
             controller = SyncPlayController(server)
+            engine = SyncEngine(
+                controller,
+                item_loader=lambda item_id, ticks: self._syncplay_load_item(
+                    server, item_id, ticks
+                ),
+            )
+            controller.attach_engine(engine)
             self.syncplay[key] = controller
         return controller
+
+    def _syncplay_load_item(self, server, item_id, start_position_ticks):
+        """Auto-handoff: fetch the group's current item and start playback."""
+        try:
+            response = server.jellyfin.get_items([item_id])
+        except Exception as error:
+            LOG.warning("syncplay item fetch failed for %s: %s", item_id, error)
+            return
+        items = (response or {}).get("Items") or []
+        if not items:
+            LOG.info("syncplay item %s returned no metadata", item_id)
+            return
+        server_id = server.config.data.get("auth.server-id") or server.config.data.get(
+            "auth.server"
+        )
+        PlaylistWorker(
+            server_id,
+            items,
+            True,  # PlayCommand=PlayNow
+            int(start_position_ticks or 0),
+            None,  # AudioStreamIndex
+            None,  # SubtitleStreamIndex
+        ).start()
 
     def onScanStarted(self, library):
         LOG.info("-->[ kodi scan/%s ]", library)

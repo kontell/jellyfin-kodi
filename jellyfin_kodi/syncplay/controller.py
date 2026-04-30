@@ -114,7 +114,31 @@ class SyncPlayController(object):
     # ------------------------------------------------------------------
 
     def attach_engine(self, engine):
+        from . import registry
+
+        if self._engine is engine:
+            return
+        if self._engine is not None:
+            registry.deregister(self._engine)
+            try:
+                self._engine.stop()
+            except Exception as error:
+                LOG.debug("Previous engine stop failed: %s", error)
         self._engine = engine
+        if engine is not None:
+            registry.register(engine)
+
+    def _teardown_engine(self):
+        from . import registry
+
+        if self._engine is None:
+            return
+        registry.deregister(self._engine)
+        try:
+            self._engine.stop()
+        except Exception as error:
+            LOG.debug("Engine stop failed: %s", error)
+        self._engine = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -127,6 +151,7 @@ class SyncPlayController(object):
             except Exception as error:
                 LOG.warning("Failed to leave group during shutdown: %s", error)
         self._reset_group_state()
+        self._teardown_engine()
 
     # ------------------------------------------------------------------
     # User-facing actions (called from UI / context menu)
