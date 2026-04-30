@@ -110,6 +110,7 @@ def folder_filter(folder_name: str) -> bool:
         ".claude",
         ".devcontainer",
         ".vscode",
+        ".venv",
         "tests",
         "tmp",
     ]
