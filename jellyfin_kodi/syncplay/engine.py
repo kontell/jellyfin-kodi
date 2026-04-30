@@ -11,11 +11,18 @@ from .controller import (
     CMD_SEEK,
     CMD_STOP,
     CMD_UNPAUSE,
+    STATE_PAUSED,
+    STATE_PLAYING,
+    STATE_WAITING,
     UPDATE_GROUP_JOINED,
     UPDATE_PLAY_QUEUE,
 )
 
 LOG = LazyLogger(__name__)
+
+# Window properties read by the in-player overlay skin.
+WINDOW_BADGE_TOP = "jellyfin.syncplay.badge.top"
+WINDOW_BADGE_STATE = "jellyfin.syncplay.badge.state"
 
 
 # Drift thresholds.
@@ -415,20 +422,24 @@ class SyncEngine(object):
 
     def _tick(self):
         if not self._player.is_playing():
+            self._publish_badge(drift_ms=None)
             return
         with self._lock:
             target_ticks = self._target_position_ticks
             target_anchor = self._target_anchor_monotonic
             target_is_playing = self._target_is_playing
         if target_ticks is None or target_anchor is None or not target_is_playing:
+            self._publish_badge(drift_ms=None)
             return
 
         elapsed = self._monotonic() - target_anchor
         expected_seconds = (target_ticks / TICKS_PER_SECOND) + elapsed
         actual_seconds = self._player.get_time()
         drift = actual_seconds - expected_seconds
+        drift_ms = drift * 1000.0
 
         if abs(drift) < SYNC_TOLERANCE_S:
+            self._publish_badge(drift_ms=drift_ms)
             return
         if abs(drift) >= DRIFT_SEEK_S:
             LOG.info(
@@ -440,6 +451,7 @@ class SyncEngine(object):
             self._with_suppressed_echo(
                 lambda: self._player.seek_seconds(expected_seconds)
             )
+        self._publish_badge(drift_ms=drift_ms)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -487,3 +499,63 @@ class SyncEngine(object):
 
     def _in_group(self):
         return self._controller.in_group
+
+    def _publish_badge(self, drift_ms):
+        """Push current state to the window properties the overlay reads."""
+        try:
+            from ..helper import window
+
+            if not self._in_group():
+                window(WINDOW_BADGE_TOP, clear=True)
+                window(WINDOW_BADGE_STATE, clear=True)
+                return
+            info = self._controller.group_info or {}
+            state = self._controller.state
+            top = render_badge_top(
+                info.get("GroupName"),
+                len(info.get("Participants") or []),
+            )
+            state_text = render_badge_state(state, drift_ms)
+            window(WINDOW_BADGE_TOP, top)
+            window(WINDOW_BADGE_STATE, state_text)
+        except Exception as error:
+            LOG.debug("Failed to publish badge state: %s", error)
+
+
+# ----------------------------------------------------------------------
+# Pure rendering helpers (testable without xbmc)
+# ----------------------------------------------------------------------
+
+
+def render_badge_top(group_name, member_count):
+    """Top line of the in-player badge.
+
+    Examples: ``"Sarah's group · 3 watching"``, ``"Movie night"``.
+    """
+    name = group_name or "Watch group"
+    if member_count and member_count > 0:
+        return "%s · %d" % (name, member_count)
+    return name
+
+
+def render_badge_state(state, drift_ms):
+    """Bottom line of the in-player badge.
+
+    - ``drift_ms`` None means "not actively playing" (paused, idle, or unknown).
+    - When playing, a small drift is rendered as ``"Synced ±NN ms"``;
+      large drift becomes ``"Catching up..."``.
+    """
+    if state == STATE_PAUSED:
+        return "Paused"
+    if state == STATE_WAITING:
+        return "Waiting for members..."
+    if state == STATE_PLAYING:
+        if drift_ms is None:
+            return "Playing"
+        magnitude = abs(drift_ms)
+        if magnitude < SYNC_TOLERANCE_S * 1000:
+            return "Synced ±%d ms" % int(magnitude)
+        if magnitude < DRIFT_SEEK_S * 1000:
+            return "Catching up..."
+        return "Resyncing..."
+    return ""

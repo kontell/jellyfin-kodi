@@ -28,6 +28,7 @@ class Player(xbmc.Player):
     skip_segments = {}
     skip_prompted = set()
     skip_dialog = None
+    syncplay_status_dialog = None
 
     def __init__(self):
         xbmc.Player.__init__(self)
@@ -124,6 +125,7 @@ class Player(xbmc.Player):
         except Exception as e:
             LOG.warning("Failed to report session playing: %s", e)
         self._syncplay_broadcast("on_local_play_started", item)
+        self._syncplay_open_status_dialog()
         window("jellyfin.skip.%s.bool" % item["Id"], True)
 
         # Immediate skip check for segments starting at 0:00
@@ -359,6 +361,41 @@ class Player(xbmc.Player):
         except Exception as error:
             LOG.debug("syncplay broadcast %s failed: %s", method_name, error)
 
+    def _syncplay_open_status_dialog(self):
+        """Open the in-player overlay if SyncPlay is active and the user
+        has not opted out via setting."""
+        if self.syncplay_status_dialog is not None:
+            return
+        if not settings("syncplayShowOverlay.bool"):
+            return
+        if not window("jellyfin.syncplay.groupId"):
+            return
+        try:
+            import xbmcaddon
+
+            from .dialogs.syncplay_status import SyncPlayStatusDialog
+
+            addon_path = xbmcaddon.Addon("plugin.video.jellyfin").getAddonInfo("path")
+            self.syncplay_status_dialog = SyncPlayStatusDialog(
+                "script-jellyfin-syncplay-status.xml",
+                addon_path,
+                "default",
+                "1080i",
+            )
+            self.syncplay_status_dialog.show()
+        except Exception as error:
+            LOG.warning("Failed to open SyncPlay overlay: %s", error)
+            self.syncplay_status_dialog = None
+
+    def _syncplay_close_status_dialog(self):
+        if self.syncplay_status_dialog is None:
+            return
+        try:
+            self.syncplay_status_dialog.close()
+        except Exception as error:
+            LOG.debug("SyncPlay overlay close failed: %s", error)
+        self.syncplay_status_dialog = None
+
     def report_playback(self, report=True):
         """Report playback progress to jellyfin server.
         Check if the user seek.
@@ -436,12 +473,14 @@ class Player(xbmc.Player):
         window("jellyfin_play", clear=True)
         self.stop_playback()
         self._syncplay_broadcast("on_local_stopped")
+        self._syncplay_close_status_dialog()
         LOG.info("--<[ playback ]")
 
     def onPlayBackEnded(self):
         """Will be called when kodi stops playing a file."""
         self.stop_playback()
         self._syncplay_broadcast("on_local_stopped")
+        self._syncplay_close_status_dialog()
         LOG.info("--<<[ playback ]")
 
     def stop_playback(self):

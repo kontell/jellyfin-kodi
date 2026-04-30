@@ -27,6 +27,7 @@ def test_import_dialogs():
     import jellyfin_kodi.dialogs.resume
     import jellyfin_kodi.dialogs.serverconnect
     import jellyfin_kodi.dialogs.servermanual
+    import jellyfin_kodi.dialogs.syncplay_status
     import jellyfin_kodi.dialogs.usersconnect  # noqa: F401
 
 
@@ -110,6 +111,7 @@ def test_import_syncplay():
     import jellyfin_kodi.syncplay.clock
     import jellyfin_kodi.syncplay.controller
     import jellyfin_kodi.syncplay.engine
+    import jellyfin_kodi.syncplay.notifications
     import jellyfin_kodi.syncplay.registry
     import jellyfin_kodi.syncplay.ui  # noqa: F401
 

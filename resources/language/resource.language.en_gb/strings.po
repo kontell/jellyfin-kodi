@@ -1404,3 +1404,59 @@ msgstr "Waiting for members"
 msgctxt "#33538"
 msgid "Allow joining shared watch sessions where playback is synchronised across members. Requires SyncPlay permission on your Jellyfin user."
 msgstr "Allow joining shared watch sessions where playback is synchronised across members. Requires SyncPlay permission on your Jellyfin user."
+
+msgctxt "#33540"
+msgid "%s joined the group"
+msgstr "%s joined the group"
+
+msgctxt "#33541"
+msgid "%s left the group"
+msgstr "%s left the group"
+
+msgctxt "#33542"
+msgid "Group paused"
+msgstr "Group paused"
+
+msgctxt "#33543"
+msgid "Group resumed"
+msgstr "Group resumed"
+
+msgctxt "#33544"
+msgid "Group seeked"
+msgstr "Group seeked"
+
+msgctxt "#33545"
+msgid "You are not in a watch group"
+msgstr "You are not in a watch group"
+
+msgctxt "#33546"
+msgid "Watch group no longer exists"
+msgstr "Watch group no longer exists"
+
+msgctxt "#33547"
+msgid "You don't have access to this content"
+msgstr "You don't have access to this content"
+
+msgctxt "#33548"
+msgid "SyncPlay error"
+msgstr "SyncPlay error"
+
+msgctxt "#33549"
+msgid "Play with watch group..."
+msgstr "Play with watch group..."
+
+msgctxt "#33550"
+msgid "Pick a watch group"
+msgstr "Pick a watch group"
+
+msgctxt "#33551"
+msgid "Queued for the watch group"
+msgstr "Queued for the watch group"
+
+msgctxt "#33552"
+msgid "Show in-player status overlay"
+msgstr "Show in-player status overlay"
+
+msgctxt "#33553"
+msgid "Display a small badge in the corner showing group name and current sync state during playback."
+msgstr "Display a small badge in the corner showing group name and current sync state during playback."

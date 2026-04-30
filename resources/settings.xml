@@ -916,6 +916,16 @@
 					<default>true</default>
 					<control type="toggle"/>
 				</setting>
+				<setting id="syncplayShowOverlay" type="boolean" label="33552" help="33553" parent="syncplayEnabled">
+					<level>0</level>
+					<default>true</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="syncplayEnabled">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
 			</group>
 		</category>
 	</section>

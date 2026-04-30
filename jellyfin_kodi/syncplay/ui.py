@@ -192,3 +192,69 @@ def format_state(state):
     if state == STATE_WAITING:
         return translate(33537)
     return ""
+
+
+# ----------------------------------------------------------------------
+# "Play with watch group" context-menu flow
+# ----------------------------------------------------------------------
+
+
+def open_play_with_group_dialog(api_client, item_id):
+    """Pick a group then queue this item into it.
+
+    Steps:
+      1. List groups; offer "Create new..." if none accept the user.
+      2. Join (or create-then-join).
+      3. POST /SyncPlay/SetNewQueue with this item.
+    """
+    if not item_id:
+        return
+    sp = SyncPlayApi(api_client)
+    groups = _list_groups(sp)
+    if groups is None:
+        return
+
+    options = [translate(33520)]  # "Create new group..."
+    for group in groups:
+        options.append(format_group_label(group))
+
+    selection = dialog("select", translate(33550), options)
+    if selection < 0:
+        return
+    if selection == 0:
+        name = dialog("input", heading=translate(33521))
+        if not name:
+            return
+        try:
+            sp.create_group(name)
+        except Exception as error:
+            LOG.warning("create_group failed: %s", error)
+            dialog("ok", "{jellyfin}", translate(33528) % error)
+            return
+        # The server-pushed GroupJoined update sets the active group;
+        # we still need to seed the queue.
+    else:
+        index = selection - 1
+        if index >= len(groups):
+            return
+        try:
+            sp.join_group(groups[index].get("GroupId"))
+        except Exception as error:
+            LOG.warning("join_group failed: %s", error)
+            dialog("ok", "{jellyfin}", translate(33528) % error)
+            return
+
+    try:
+        sp.set_new_queue([item_id], position=0, start_position_ticks=0)
+    except Exception as error:
+        LOG.warning("set_new_queue failed: %s", error)
+        dialog("ok", "{jellyfin}", translate(33528) % error)
+        return
+
+    dialog(
+        "notification",
+        heading="{jellyfin}",
+        message=translate(33551),
+        time=2000,
+        sound=False,
+    )

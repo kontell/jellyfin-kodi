@@ -7,6 +7,7 @@ import time
 import xbmc
 
 from ..helper import LazyLogger, window
+from . import notifications
 from .api import SyncPlayApi
 from .clock import ServerClock, parse_utc
 
@@ -230,11 +231,15 @@ class SyncPlayController(object):
                     self._group_info = payload
                     self._group_id = payload.get("GroupId") or data.get("GroupId")
                     self._state = payload.get("State")
+                    group_name = payload.get("GroupName")
                 else:
                     self._group_id = data.get("GroupId")
+                    group_name = None
             self._start_ping_loop()
+            notifications.notify_group_joined(group_name)
         elif update_type == UPDATE_GROUP_LEFT:
             self._reset_group_state()
+            notifications.notify_group_left()
         elif update_type == UPDATE_STATE_UPDATE:
             with self._lock:
                 if isinstance(payload, dict):
@@ -245,10 +250,15 @@ class SyncPlayController(object):
                     self._play_queue = payload
         elif update_type == UPDATE_USER_JOINED:
             self._mutate_participants(payload, add=True)
+            if isinstance(payload, str):
+                notifications.notify_user_joined(payload)
         elif update_type == UPDATE_USER_LEFT:
             self._mutate_participants(payload, add=False)
+            if isinstance(payload, str):
+                notifications.notify_user_left(payload)
         elif update_type in UPDATE_ERRORS:
             LOG.warning("SyncPlay error update: %s", update_type)
+            notifications.notify_error(update_type)
             self._reset_group_state()
 
         self._publish_state()

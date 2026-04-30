@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Jellyfin SyncPlay status badge -->
+<!-- Reads window properties published by SyncEngine. -->
+<window>
+	<defaultcontrol always="true">3050</defaultcontrol>
+	<onload>Dialog.Close(fullscreeninfo,true)</onload>
+	<controls>
+		<control type="group" id="3050">
+			<animation type="WindowOpen" reversible="false">
+				<effect type="fade" start="0" end="100" time="300" />
+				<effect type="slide" start="-400,0" end="0,0" time="300" tween="cubic" easing="out"/>
+			</animation>
+			<animation type="WindowClose" reversible="false">
+				<effect type="fade" start="100" end="0" time="200" />
+				<effect type="slide" start="0,0" end="-400,0" time="200" tween="cubic" easing="in"/>
+			</animation>
+			<!-- Anchor: top-right -->
+			<left>1530</left>
+			<top>40</top>
+			<width>370</width>
+			<height>72</height>
+			<!-- Background -->
+			<control type="image">
+				<left>0</left>
+				<top>0</top>
+				<width>370</width>
+				<height>72</height>
+				<texture colordiffuse="E6000000">white.png</texture>
+				<aspectratio>stretch</aspectratio>
+			</control>
+			<!-- Accent bar on left -->
+			<control type="image">
+				<left>0</left>
+				<top>0</top>
+				<width>4</width>
+				<height>72</height>
+				<texture colordiffuse="FF00A4DC">white.png</texture>
+			</control>
+			<!-- Top line: group name + member count -->
+			<control type="label">
+				<left>16</left>
+				<top>10</top>
+				<width>340</width>
+				<height>26</height>
+				<font>font13</font>
+				<textcolor>FFFFFFFF</textcolor>
+				<shadowcolor>66000000</shadowcolor>
+				<aligny>center</aligny>
+				<label>$INFO[Window(Home).Property(jellyfin.syncplay.badge.top)]</label>
+			</control>
+			<!-- Bottom line: sync state -->
+			<control type="label">
+				<left>16</left>
+				<top>38</top>
+				<width>340</width>
+				<height>22</height>
+				<font>font12</font>
+				<textcolor>FFAAAAAA</textcolor>
+				<shadowcolor>66000000</shadowcolor>
+				<aligny>center</aligny>
+				<label>$INFO[Window(Home).Property(jellyfin.syncplay.badge.state)]</label>
+			</control>
+		</control>
+	</controls>
+</window>

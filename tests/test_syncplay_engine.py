@@ -10,6 +10,8 @@ from jellyfin_kodi.syncplay.engine import (
     SYNC_TOLERANCE_S,
     TICKS_PER_SECOND,
     SyncEngine,
+    render_badge_state,
+    render_badge_top,
 )
 from jellyfin_kodi.syncplay import controller as controller_mod
 
@@ -422,3 +424,58 @@ def test_drift_loop_skips_when_not_playing():
 
     engine._tick()
     assert player.calls == []
+
+
+# ----------------------------------------------------------------------
+# Badge rendering helpers (pure)
+# ----------------------------------------------------------------------
+
+
+def test_render_badge_top_with_members():
+    assert render_badge_top("Movie night", 3) == "Movie night · 3"
+
+
+def test_render_badge_top_zero_members():
+    assert render_badge_top("Solo", 0) == "Solo"
+
+
+def test_render_badge_top_default_name():
+    assert render_badge_top(None, 2) == "Watch group · 2"
+
+
+def test_render_badge_state_synced():
+    assert (
+        render_badge_state(controller_mod.STATE_PLAYING, drift_ms=42) == "Synced ±42 ms"
+    )
+
+
+def test_render_badge_state_catching_up():
+    # Above tolerance, below seek threshold.
+    drift_ms = (SYNC_TOLERANCE_S * 1000) + 100
+    assert (
+        render_badge_state(controller_mod.STATE_PLAYING, drift_ms=drift_ms)
+        == "Catching up..."
+    )
+
+
+def test_render_badge_state_resyncing():
+    drift_ms = (DRIFT_SEEK_S * 1000) + 500
+    assert (
+        render_badge_state(controller_mod.STATE_PLAYING, drift_ms=drift_ms)
+        == "Resyncing..."
+    )
+
+
+def test_render_badge_state_paused():
+    assert render_badge_state(controller_mod.STATE_PAUSED, drift_ms=None) == "Paused"
+
+
+def test_render_badge_state_waiting():
+    assert (
+        render_badge_state(controller_mod.STATE_WAITING, drift_ms=None)
+        == "Waiting for members..."
+    )
+
+
+def test_render_badge_state_unknown_returns_empty():
+    assert render_badge_state(None, drift_ms=42) == ""

@@ -199,6 +199,10 @@ class Events(object):
             from ..syncplay import open_groups_dialog
 
             open_groups_dialog(api_client)
+        elif mode == "syncplay_play_with_group":
+            from ..syncplay.ui import open_play_with_group_dialog
+
+            open_play_with_group_dialog(api_client, params.get("id"))
         elif mode == "adduser":
             add_user(api_client)
         elif mode == "updatepassword":
@@ -772,6 +776,19 @@ def browse(media, view_id=None, folder=None, server_id=None, api_client=None):
                             (
                                 translate(16103),
                                 "RunPlugin(plugin://plugin.video.jellyfin/?mode=watched&id=%s&server=%s)"
+                                % (item["Id"], server_id),
+                            )
+                        )
+
+                    if settings("syncplayEnabled.bool") and item["Type"] in (
+                        "Movie",
+                        "Episode",
+                        "Video",
+                    ):
+                        context.append(
+                            (
+                                translate(33549),
+                                "RunPlugin(plugin://plugin.video.jellyfin/?mode=syncplay_play_with_group&id=%s&server=%s)"
                                 % (item["Id"], server_id),
                             )
                         )
